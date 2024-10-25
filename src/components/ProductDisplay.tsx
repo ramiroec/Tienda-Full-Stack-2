@@ -8,6 +8,34 @@ const Container = styled.div`
   flex-direction: column;
   align-items: center;
   padding: 20px;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+`;
+
+const Header = styled.header`
+  margin-bottom: 20px;
+  font-size: 2em;
+  color: #343a40;
+`;
+
+const CategoryList = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 20px;
+`;
+
+const CategoryButton = styled.button`
+  padding: 10px 15px;
+  border: none;
+  background-color: #007bff;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  &:hover {
+    background-color: #0056b3;
+  }
 `;
 
 const ProductList = styled.ul`
@@ -27,7 +55,6 @@ const ProductItem = styled.li`
   width: 200px;
   text-align: center;
   transition: transform 0.2s;
-
   &:hover {
     transform: scale(1.05);
   }
@@ -52,14 +79,29 @@ const ProductPrice = styled.p`
 `;
 
 const ProductDisplay: React.FC = () => {
+  const [categories, setCategories] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('electronics');
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchCategories = async () => {
       try {
-        const response = await axios.get('https://fakestoreapi.com/products/category/electronics');
+        const response = await axios.get('https://fakestoreapi.com/products/categories');
+        setCategories(response.data);
+      } catch (error) {
+        setError('Error al cargar las categorías');
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const response = await axios.get(`https://fakestoreapi.com/products/category/${selectedCategory}`);
         setProducts(response.data);
         setLoading(false);
       } catch (error) {
@@ -67,16 +109,26 @@ const ProductDisplay: React.FC = () => {
         setLoading(false);
       }
     };
-
     fetchProducts();
-  }, []);
+  }, [selectedCategory]);
+
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+  };
 
   if (loading) return <p>Cargando...</p>;
   if (error) return <p>{error}</p>;
 
   return (
     <Container>
-      <h1>Productos</h1>
+      <Header>Productos</Header>
+      <CategoryList>
+        {categories.map(category => (
+          <CategoryButton key={category} onClick={() => handleCategoryChange(category)}>
+            {category}
+          </CategoryButton>
+        ))}
+      </CategoryList>
       <ProductList>
         {products.map(product => (
           <ProductItem key={product.id}>
